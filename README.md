@@ -1,7 +1,7 @@
 # Exploring Variability of Personal Air Pollution Exposure Dashboard 
 
 
-## Overview
+## Dashboard Overview
 This dashboard explores personal exposure to fine particulate matter (PM₂.₅) among participants in the Atlanta, Georgia metropolitan area. It compares participant personal exposure data with ambient air quality measurements to better understand how real-world exposures differ from traditional ambient monitoring.
 
 ## Research Topic
