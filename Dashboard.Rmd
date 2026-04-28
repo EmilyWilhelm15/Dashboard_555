@@ -1,0 +1,357 @@
+---
+title: "Exploring Variability of Personal Air Pollution Exposure"
+runtime: shiny
+output:
+  flexdashboard::flex_dashboard:
+    orientation: rows
+    vertical_layout: fill 
+    social: menu
+    theme: 
+      version: 4
+      bootswatch: minty
+    
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+```
+
+```{r include = FALSE}
+library(flexdashboard)
+library(ggplot2)
+library(plotly)
+library(leaflet)
+library(shiny)
+library(dplyr)
+library(rsconnect)
+```
+
+```{css, echo=FALSE}
+body {
+  color: #000000 !important;
+  font-size: 16px;
+}
+
+.navbar .nav-link.active,
+.navbar .nav-link.active:focus,
+.navbar .nav-link.active:hover {
+  background-color: #e6f5f1 !important;
+  color: #2C7F6E !important;
+  font-size: 18px !important;
+  font-weight: 400;
+  border-radius: 6px;
+}
+
+.navbar .nav-link > li > a {
+  color: #000000 !important;
+  font-size: 18px !important;
+  font-weight: 400;
+  padding-top: 15px !important;
+  padding-bottom: 15px !important;
+}
+
+.section.level2:first-of-type .chart-title {
+  padding: 10px !important; 
+  border-radius: 6px;
+  font-weight: 700;
+}
+
+.chart-title {
+  color: #000000 !important;
+}
+
+.selectize-input {
+  border: 2px solid #2C7F6E !important;       /* mint border */
+  color: #000000 !important;
+}
+
+.selectize-input.focus {
+  border-color: #2C7F6E !important;
+  box-shadow: 0 0 0 0.2rem rgba(120, 194, 173, 0.25) !important;
+}
+```
+
+Sidebar {.sidebar}
+======================================================================
+
+
+This dashboard covers several topics:
+
+* PM~2.5~
+* Air monitors
+
+
+Participant Data
+======================================================================
+
+Row {data-height=200}
+-----------------------------------------------------------------------
+### Explore the Study Participant's 24-Hour Averager PM~2.5~ Exposure Concentration Data
+
+
+```{r, echo=FALSE}
+EPA_Guidelines <- read.csv("./Data/EPA_Guidelines.csv")
+WHO_Guidelines <- read.csv("./Data/WHO_Guidelines.csv")
+
+EPA_Guidelines <- EPA_Guidelines %>%
+  mutate(Category_clean = recode(Category,
+    "1. EPA Annual Limit (9 µg/m³)" = "Annual Limit (9 µg/m³)",
+    "2. EPA Daily Limit (35 µg/m³)" = "Daily Limit (35 µg/m³)",
+    "3. Hazardous" = "Hazardous"
+  ))
+
+WHO_Guidelines <- WHO_Guidelines %>%
+  mutate(Category_clean = recode(Category,
+    "1. WHO Annual Limit (< 5 µg/m³)" = "Annual Limit (< 5 µg/m³)",
+    "2. WHO Daily Limit (< 15 µg/m³)" = "Daily Limit (< 15 µg/m³)",
+    "3. Hazardous" = "Hazardous"
+  ))
+
+selectInput(
+  inputId = "boxplot_choice",
+  label = "Choose Boxplot:",
+  choices = c(
+    "EPA Guidelines" = "EPA",
+    "WHO Guidelines" = "WHO"
+  ),
+  selected = "EPA"
+)
+```
+
+Row {data-height=600}
+-----------------------------------------------------------------------
+
+### Full Boxplot {data-width=55}
+
+```{r, echo=FALSE}  
+renderPlotly({
+
+  if (input$boxplot_choice == "EPA") {
+
+    base_plot <- ggplot(data = EPA_Guidelines,
+                      aes(x = Category_clean, 
+                          y = PM_Mean_Concentration_24h,
+                          fill = Category_clean,
+                          text = paste("Category:", Category,
+                                       "<br>PM2.5:", round(PM_Mean_Concentration_24h, 2), "µg/m³" ))) + 
+  geom_boxplot(coef = NULL) +
+  scale_x_discrete(labels = NULL) + 
+  #scale_y_log10() +
+  scale_fill_manual(values = c(
+    "Annual Limit (9 µg/m³)" = "#5CC8A1",
+    "Daily Limit (35 µg/m³)" = "#F77F00",
+    "Hazardous" = "#E63946")) + 
+  labs(title = "PM<sub>2.5</sub> (µg/m³) Concentrations (EPA PM<sub>2.5</sub> Guidelines)",
+       x = NULL,
+       y = "PM<sub>2.5</sub> (µg/m³)") +
+  theme_minimal()
+  
+  } else if (input$boxplot_choice == "WHO") {
+    
+    base_plot <- ggplot(WHO_Guidelines,
+                   aes(x = Category_clean, 
+                       y = PM,
+                       fill = Category_clean,
+                       text = paste("Category:", Category,
+                                    "<br>PM<sub>2.5</sub>:", round(PM, 2), "µg/m³" ))) +
+      geom_boxplot(coef = NULL) +
+      scale_x_discrete(labels = NULL) + 
+      #scale_y_log10() +
+      scale_fill_manual(values = c("Annual Limit (< 5 µg/m³)" = "#5CC8A1",
+                                   "Daily Limit (< 15 µg/m³)" = "#F77F00",
+                                   "Hazardous" = "#E63946")) +  
+      labs(title = "PM<sub>2.5</sub> (µg/m³) Concentrations (WHO PM<sub>2.5</sub> Guidelines)",
+           x = NULL,
+           y = "PM<sub>2.5</sub> (µg/m³)") +
+  theme_minimal() 
+  }
+  
+
+  ggplotly(base_plot + coord_cartesian(ylim = c(-10, 175)), 
+           tooltip = "text", height = 500) %>% 
+    layout(autosize = TRUE,
+           #xaxis = list(autorange = TRUE),
+           yaxis = list(range = c(-10, 175)),
+           legend = list(orientation = "h", 
+                         x = 0.5, 
+                         xanchor = "center", 
+                         y = -0.2, 
+                         title = list(text = "")),
+           margin = list(t = 80, b = 80, l = 80, r = 40)) %>% 
+    config(responsive = TRUE)
+}) 
+
+```
+
+### Zoomed View {data-width=45}
+
+```{r, echo=FALSE}
+zoom_EPA_data <- EPA_Guidelines %>%
+  dplyr::filter(PM_Mean_Concentration_24h <= 35)
+
+zoom_WHO_data <- WHO_Guidelines %>%
+  dplyr::filter(PM <= 15)
+
+renderPlotly({
+
+  if (input$boxplot_choice == "EPA") {
+    
+    base_plot <- ggplot(zoom_EPA_data,
+                        aes(x = Category_clean,
+                            y = PM_Mean_Concentration_24h,
+                            fill = Category_clean,
+                            text = paste("Category:", Category,
+                                         "<br>PM2.5:", round(PM_Mean_Concentration_24h, 2), "µg/m³"))) +
+      geom_boxplot(coef = NULL) +
+      scale_x_discrete(labels = NULL) +
+      scale_fill_manual(values = c(
+        "Annual Limit (9 µg/m³)" = "#5CC8A1",
+        "Daily Limit (35 µg/m³)" = "#F77F00"
+      )) +
+      labs(title = "PM<sub>2.5</sub> (µg/m³) Concentrations (EPA PM<sub>2.5</sub><br>Guidelines)<br><sup>Zoomed (0–35 µg/m³)</sup>",
+           subtitle = "Zoomed (0–35 µg/m³)",
+           x = NULL, 
+           y = "PM2.5 (µg/m³)") +
+      theme_minimal()
+    
+  } else {
+    
+    base_plot <- ggplot(zoom_WHO_data,
+                        aes(x = Category_clean,
+                            y = PM,
+                            fill = Category_clean,
+                            text = paste("Category:", Category,
+                                         "<br>PM2.5:", round(PM, 2), "µg/m³"))) +
+      geom_boxplot(coef = NULL) +
+      scale_x_discrete(labels = NULL) +
+      scale_fill_manual(values = c("Annual Limit (< 5 µg/m³)" = "#5CC8A1",
+                                   "Daily Limit (< 15 µg/m³)" = "#F77F00")) +   
+      labs(title = "PM<sub>2.5</sub> (µg/m³) Concentrations (WHO PM<sub>2.5</sub><br>Guidelines) <br><sup>Zoomed (0–35 µg/m³)</sup>",
+           x = NULL, 
+           y = "PM2.5 (µg/m³)") +
+      theme_minimal()
+  }
+
+  ggplotly(
+    base_plot + coord_cartesian(ylim = c(0, 34)),
+    tooltip = "text", height = 500) %>%
+    layout(
+      autosize = TRUE,
+       legend = list(orientation = "h", 
+                         x = 0.5, 
+                         xanchor = "center", 
+                         y = -0.2, 
+                         title = list(text = "")),
+      margin = list(t = 40, b = 80, l = 80, r = 40)) %>%
+    config(responsive = TRUE)
+})
+```
+
+
+Row {data-height=150}
+-----------------------------------------------------------------------
+
+### About
+These boxplots display the distribution of participant 24-hour average PM₂.₅ exposure concentrations grouped by annual and daily EPA and WHO guideline categories, comparing U.S. regulatory standards with more stringent international guideline thresholds. Together, they show how exposures are distributed across health-relevant categories and highlight the extent to which observations exceed guideline limits, providing important context for real-world exposure and potential health risks.
+
+
+
+Participant vs. Ambient Data
+======================================================================
+
+
+Row {data-height=800}
+-----------------------------------------------------------------------
+
+### Histogram 
+
+```{r, echo=FALSE}
+Min_GDPH <- read.csv("./Outputs/Min.csv")
+Max_GDPH <- read.csv("./Outputs/Max.csv")
+Means_GDPH <- read.csv("./Outputs/Means.csv")
+
+selectInput(
+  inputId = "histogram_choice",
+  label = "Choose Histogram:",
+  choices = c(
+    "Mean 24-Hour PM₂.₅ Concentration" = "Mean",
+    "Minimum 24-Hour PM₂.₅ Concentration" = "Minimum",
+    "Maximum 24-Hour PM₂.₅ Concentration" = "Maximum"
+  ),
+  selected = "Mean",
+  width = "400px"
+)
+  
+renderPlotly({
+  if (input$histogram_choice == "Mean") {
+    histogram <- ggplot(Means_GDPH, aes(x = concentration, fill = type)) + 
+  geom_histogram(position = "identity", bins = 10, binwidth = 3, color = "black", linewidth = 0.3, alpha = 0.7) +
+      scale_fill_manual(values = c("Ambient" = "#E69F00", "Personal" = "#0072B2")) +
+  labs(
+    title = "Personal vs Ambient PM<sub>2.5</sub> Concentrations During \nEach Participant's 24-Hour Monitoring Period",
+    x = "PM<sub>2.5</sub> (µg/m³)", 
+    y = "Count",
+    fill = NULL) +
+  #coord_cartesian(xlim = c(0,25), 
+                  #ylim = c(-2, 50)) +
+  theme_minimal()
+  } 
+  
+  else if (input$histogram_choice == "Minimum") {
+    histogram <- ggplot(Min_GDPH, aes(x = concentration, fill = type)) + 
+  geom_histogram(position = "identity", bins = 10, binwidth = 3,color = "black", linewidth = 0.3, alpha = 0.7) +
+      scale_fill_manual(values = c("Ambient" = "#E69F00", "Personal" = "#0072B2")) +
+      labs(
+        title = "Personal vs Ambient PM<sub>2.5</sub> Concentrations During \nEach Participant's 24-Hour Monitoring Period",
+        x = "PM<sub>2.5</sub> (µg/m³)", 
+        y = "Count",
+        fill = NULL) +
+      #coord_cartesian(ylim = c(-2, 60)) +
+      theme_minimal()
+  } 
+  
+  else if (input$histogram_choice == "Maximum") {
+    histogram <- ggplot(Max_GDPH, aes(x = concentration, fill = type)) + 
+  geom_histogram(position = "identity", bins = 10, binwidth = 3, color = "black", linewidth = 0.3, alpha = 0.7) +
+      scale_fill_manual(values = c("Ambient" = "#E69F00", "Personal" = "#0072B2")) +
+  labs(
+    title = "Maximum Hourly Personal and Ambient PM2.5 Concentrations During \nEach 24-Hour Participant Period",
+    x = "PM<sub>2.5</sub> (µg/m³)", 
+    y = "Count",
+    fill = NULL) +
+  #coord_cartesian(ylim = c(-2, 40)) +
+  theme_minimal() 
+  }
+  
+  ggplotly(histogram, tooltip = c("x", "y", "fill")) %>% 
+    layout(
+      height = 600,
+    #autosize = TRUE,
+    xaxis = list(title = list(standoff = 20)),
+    legend = list(
+      orientation = "h",
+      x = 0.5,
+      xanchor = "center",
+      y = 1.1),
+    margin = list(t = 80, b = 220, l = 70, r = 20)) %>%
+  config(responsive = TRUE)
+  
+}) 
+
+
+```
+
+Row 
+-----------------------------------------------------------------------
+
+### About
+These histograms compare participant-level mean, minimum, and maximum hourly PM₂.₅ concentrations with corresponding ambient measurements from the South DeKalb air monitor (Georgia Department of Public Health). The plots highlight real-world variability in personal exposure to PM₂.₅ and how it differs from ambient monitoring data, emphasizing potential gaps in traditional air quality assessment.
+
+
+Data Description
+======================================================================
+**About The Dashboard**
+This dashboard uses two datasets: participant exposure data from an observational panel study and ambient PM₂.₅ monitoring data from the EPA’s South DeKalb air monitoring station (https://airgeorgia.org/). The participant dataset was collected through Emory University’s Climate and Health Actionable Research and Translation Center (CHART) and is not publicly available. The sample includes 53 adult participants residing in the Atlanta, Georgia metropolitan area. Continuous 48-hour data were collected using wearable air pollution monitors (MicroPEM) between May and August 2025 to capture real-world personal PM₂.₅ exposure conditions. 
+
+**Github**
+The source code and README for the dashboard are available here: 
