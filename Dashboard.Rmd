@@ -4,7 +4,7 @@ runtime: shiny
 output:
   flexdashboard::flex_dashboard:
     orientation: rows
-    vertical_layout: fill 
+    vertical_layout: scroll 
     social: menu
     theme: 
       version: 4
@@ -71,15 +71,6 @@ body {
 }
 ```
 
-Sidebar {.sidebar}
-======================================================================
-
-
-This dashboard covers several topics:
-
-* PM~2.5~
-* Air monitors
-
 
 Participant Data
 ======================================================================
@@ -118,7 +109,7 @@ selectInput(
 )
 ```
 
-Row {data-height=600}
+Row {data-height=750}
 -----------------------------------------------------------------------
 
 ### Full Boxplot {data-width=55}
@@ -168,7 +159,7 @@ renderPlotly({
   
 
   ggplotly(base_plot + coord_cartesian(ylim = c(-10, 175)), 
-           tooltip = "text", height = 500) %>% 
+           tooltip = "text", height = 650) %>% 
     layout(autosize = TRUE,
            #xaxis = list(autorange = TRUE),
            yaxis = list(range = c(-10, 175)),
@@ -234,7 +225,7 @@ renderPlotly({
 
   ggplotly(
     base_plot + coord_cartesian(ylim = c(0, 34)),
-    tooltip = "text", height = 500) %>%
+    tooltip = "text", height = 650) %>%
     layout(
       autosize = TRUE,
        legend = list(orientation = "h", 
@@ -323,15 +314,15 @@ renderPlotly({
   theme_minimal() 
   }
   
-  ggplotly(histogram, tooltip = c("x", "y", "fill"), height = 600) %>% 
+  ggplotly(histogram, tooltip = c("x", "y", "fill"), height = 750) %>% 
     layout(
     xaxis = list(title = list(standoff = 10)),
     legend = list(
       orientation = "h",
       x = 0.5,
       xanchor = "center",
-      y = 1.1),
-    margin = list(t = 80, b = 220, l = 70, r = 20)) %>%
+      y = -0.25),
+    margin = list(t = 100, b = 160, l = 80, r = 30)) %>%
   config(responsive = TRUE)
   
 }) 
