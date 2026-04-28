@@ -84,7 +84,7 @@ This dashboard covers several topics:
 Participant Data
 ======================================================================
 
-Row {data-height=200}
+Row {data-height=300}
 -----------------------------------------------------------------------
 ### Explore the Study Participant's 24-Hour Averager PM~2.5~ Exposure Concentration Data
 
