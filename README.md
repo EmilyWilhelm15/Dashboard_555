@@ -17,4 +17,11 @@ This project focuses on environmental exposure science, specifically examining v
 - Histograms comparing personal PM₂.₅ with the corresponding ambient PM₂.₅ concentrations
 - Interactive tooltips for detailed data exploration
 
+## How to Run the Dashboard
+1. Download this repository and open it in RStudio  
+2. Ensure the `Data` folder is in the project directory  
+3. In the R console, run: rmarkdown::run("Dashboard.Rmd") 
+
+
+
 
