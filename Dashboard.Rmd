@@ -260,7 +260,7 @@ Participant vs. Ambient Data
 ======================================================================
 
 
-Row {data-height=800}
+Row {data-height=900}
 -----------------------------------------------------------------------
 
 ### Histogram 
@@ -323,11 +323,9 @@ renderPlotly({
   theme_minimal() 
   }
   
-  ggplotly(histogram, tooltip = c("x", "y", "fill")) %>% 
+  ggplotly(histogram, tooltip = c("x", "y", "fill"), height = 600) %>% 
     layout(
-      height = 600,
-    #autosize = TRUE,
-    xaxis = list(title = list(standoff = 20)),
+    xaxis = list(title = list(standoff = 10)),
     legend = list(
       orientation = "h",
       x = 0.5,
@@ -351,7 +349,7 @@ These histograms compare participant-level mean, minimum, and maximum hourly PM�
 Data Description
 ======================================================================
 **About The Dashboard**
-This dashboard uses two datasets: participant exposure data from an observational panel study and ambient PM₂.₅ monitoring data from the EPA’s South DeKalb air monitoring station (https://airgeorgia.org/). The participant dataset was collected through Emory University’s Climate and Health Actionable Research and Translation Center (CHART) and is not publicly available. The sample includes 53 adult participants residing in the Atlanta, Georgia metropolitan area. Continuous 48-hour data were collected using wearable air pollution monitors (MicroPEM) between May and August 2025 to capture real-world personal PM₂.₅ exposure conditions. 
+This dashboard uses two datasets: participant exposure data from an observational study and ambient PM₂.₅ monitoring data from the EPA’s South DeKalb air monitoring station (https://airgeorgia.org/). The participant dataset was collected through Emory University’s Climate and Health Actionable Research and Translation Center (CHART) and is not publicly available. The sample includes 53 adult participants residing in the Atlanta, Georgia metropolitan area. Continuous 48-hour data were collected using wearable air pollution monitors (MicroPEM) between May and August 2025 to capture real-world personal PM₂.₅ exposure conditions. 
 
 **Github**
 The source code and README for the dashboard are available here: https://github.com/EmilyWilhelm15/Dashboard_555 
