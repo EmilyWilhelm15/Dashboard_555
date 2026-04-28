@@ -12,7 +12,7 @@ This project focuses on environmental exposure science, specifically examining v
 - **Ambient Data:** Georgia Department of Public Health (South DeKalb Ambient Air Monitor)
   https://airgeorgia.org/
 
-## Features
+## Dashboard Features
 - Interactive boxplots comparing participant data categorized by EPA vs WHO PM₂.₅ guideline categories
 - Histograms comparing personal PM₂.₅ with the corresponding ambient PM₂.₅ concentrations
 - Interactive tooltips for detailed data exploration
